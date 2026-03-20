@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { exportBackup, importBackup } from '../storage.js';
 
 const BLANK = { name: '', icon: '⭐', color: '#6366f1', type: 'boolean', points: 10 };
 const ICONS = ['☀️','💉','📞','🚿','🔄','📖','✍️','🏃','🧘','💊','🥗','💧','🎯','📝','🎵','🌙','💪','🧠','❤️','⭐'];
@@ -56,6 +57,20 @@ function HabitForm({ initial, onSave, onCancel }) {
 
 export default function ManageHabits({ habits, setHabits, onNav }) {
   const [editing, setEditing] = useState(null); // null | 'new' | habit object
+  const [importStatus, setImportStatus] = useState(null);
+  const fileInputRef = useRef(null);
+
+  const handleImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      await importBackup(file);
+      setImportStatus('Imported! Reload the app to see changes.');
+    } catch {
+      setImportStatus('Error: invalid backup file.');
+    }
+    e.target.value = '';
+  };
 
   const addHabit = (form) => {
     const id = form.name.toLowerCase().replace(/\s+/g, '_') + '_' + Date.now();
@@ -109,6 +124,16 @@ export default function ManageHabits({ habits, setHabits, onNav }) {
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="backup-section">
+        <div className="backup-title">Backup & Restore</div>
+        <div className="backup-row">
+          <button className="backup-btn" onClick={exportBackup}>⬇ Export</button>
+          <button className="backup-btn" onClick={() => fileInputRef.current.click()}>⬆ Import</button>
+          <input ref={fileInputRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleImport} />
+        </div>
+        {importStatus && <div className="backup-status">{importStatus}</div>}
       </div>
 
       <nav className="bottom-nav">

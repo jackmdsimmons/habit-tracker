@@ -75,6 +75,43 @@ export function computeDayPoints(habits, dayLog) {
   }, 0);
 }
 
+export function exportBackup() {
+  const data = {
+    version: 1,
+    exported: new Date().toISOString(),
+    habits:  localStorage.getItem(KEYS.habits),
+    logs:    localStorage.getItem(KEYS.logs),
+    points:  localStorage.getItem(KEYS.points),
+    rewards: localStorage.getItem(KEYS.rewards),
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `habits-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export function importBackup(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (data.habits)  localStorage.setItem(KEYS.habits,  data.habits);
+        if (data.logs)    localStorage.setItem(KEYS.logs,    data.logs);
+        if (data.points)  localStorage.setItem(KEYS.points,  data.points);
+        if (data.rewards) localStorage.setItem(KEYS.rewards, data.rewards);
+        resolve();
+      } catch {
+        reject(new Error('Invalid backup file'));
+      }
+    };
+    reader.readAsText(file);
+  });
+}
+
 export function computeStreak(habits, logs) {
   const today = todayStr();
   let streak = 0;
